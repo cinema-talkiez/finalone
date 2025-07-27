@@ -3,11 +3,7 @@
   publish = "out"
 
 [functions]
-  [functions.verify]
-    src = "netlify/functions/verify.js"
-    dest = ".netlify/functions/verify"
-    directory = "netlify/functions"
-
+  directory = "netlify/functions"
 
 [dev]
   targetPort = 3000
