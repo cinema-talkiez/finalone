@@ -3,9 +3,15 @@ const path = require('path');
 const User = require(path.resolve(__dirname, '../../server/models/User'));
 require('dotenv').config();
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB error:', err));
+let conn = null;
+
+async function connectDB() {
+  if (conn) return conn;
+  conn = await mongoose.connect(process.env.MONGO_URI, {
+    bufferCommands: false,
+  });
+  return conn;
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -16,6 +22,8 @@ exports.handler = async (event) => {
   }
 
   try {
+    await connectDB(); // ✅ Connect only on demand
+
     const { userId, tokenVerified } = JSON.parse(event.body || '{}');
 
     if (!userId) {
