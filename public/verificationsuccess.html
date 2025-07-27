@@ -69,14 +69,9 @@
 <body>
   <div class="container">
     <h1 style="font-size: 1.5rem; color: BLACK;">✅ Verification Success</h1>
-
     <!-- Hidden User ID -->
     <p style="display: none;"><strong>User ID:</strong> <span id="userIdDisplay"></span></p>
-
-    <button id="submitBtn">
-      SUBMIT
-    </button>
-
+    <button id="submitBtn">SUBMIT</button>
     <p id="statusMsg"></p>
   </div>
 
@@ -117,11 +112,10 @@
         });
 
         const data = await res.json();
+
         if (res.ok) {
           statusMsg.textContent = '✅ User verified and saved!';
           submitBtn.disabled = true;
-          localStorage.setItem("validToken", "true");
-          localStorage.setItem("validTokenExpiration", (Date.now() + 10 * 60 * 1000).toString());
         } else {
           statusMsg.textContent = `❌ Error: ${data.message}`;
         }
