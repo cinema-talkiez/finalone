@@ -1,47 +1,50 @@
-const mongoose = require("mongoose");
-const MONGODB_URI = process.env.MONGODB_URI;
+const mongoose = require('mongoose');
+const User = require('../../models/User');
 
-const userSchema = new mongoose.Schema({
-  userId: { type: String, required: true, unique: true },
-  tokenVerified: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now, expires: 86400 },
-});
+let isConnected = false;
 
-const User = mongoose.models.User || mongoose.model("User", userSchema);
-
-exports.handler = async (event) => {
+module.exports.handler = async (event) => {
   const userId = event.path.split("/").pop();
 
-  if (!userId) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ message: "Missing userId" }),
-    };
-  }
-
-  try {
-    if (!mongoose.connection.readyState) {
-      await mongoose.connect(MONGODB_URI, { dbName: "userDB" });
-    }
-
-    const user = await User.findOne({ userId });
-
-    if (!user) {
+  if (!isConnected) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
       return {
-        statusCode: 200,
-        body: JSON.stringify({ tokenVerified: false }),
+        statusCode: 500,
+        body: JSON.stringify({ message: "MongoDB URI not found in environment" }),
       };
     }
 
+    try {
+      await mongoose.connect(uri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      isConnected = true;
+    } catch (error) {
+      console.error("❌ MongoDB connection error:", error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: "MongoDB connection failed", error: error.message }),
+      };
+    }
+  }
+
+  try {
+    const user = await User.findOne({ userId });
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ tokenVerified: user.tokenVerified }),
+      body: JSON.stringify({
+        exists: !!user,
+        tokenVerified: user?.tokenVerified || false,
+      }),
     };
-  } catch (err) {
-    console.error("DB error:", err);
+  } catch (error) {
+    console.error("❌ DB read error:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: "Internal server error", error: err.message }),
+      body: JSON.stringify({ message: "Internal server error", error: error.message }),
     };
   }
 };
