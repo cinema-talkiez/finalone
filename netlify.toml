@@ -6,6 +6,8 @@
   [functions.verify]
     src = "netlify/functions/verify.js"
     dest = ".netlify/functions/verify"
+    directory = "netlify/functions"
+
 
 [dev]
   targetPort = 3000
