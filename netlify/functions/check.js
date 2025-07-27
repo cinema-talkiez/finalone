@@ -1,52 +1,48 @@
-const mongoose = require('mongoose');
-const path = require('path');
-const User = require(path.resolve(__dirname, '../../server/models/User'));
-require('dotenv').config();
+const mongoose = require("mongoose");
 
-let conn = null;
+const MONGODB_URI = process.env.MONGODB_URI; // ← now loaded from Netlify
 
-async function connectDB() {
-  if (conn) return conn;
-  conn = await mongoose.connect(process.env.MONGO_URI, {
-    bufferCommands: false,
-  });
-  return conn;
-}
+const userSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true },
+  tokenVerified: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now, expires: 86400 },
+});
+
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'GET') {
+  const userId = event.path.split("/").pop();
+
+  if (!userId) {
     return {
-      statusCode: 405,
-      body: JSON.stringify({ message: 'Method Not Allowed' }),
+      statusCode: 400,
+      body: JSON.stringify({ message: "Missing userId" }),
     };
   }
 
   try {
-    await connectDB(); // ✅ connect during request handling
-
-    const userId = event.path.split('/check/')[1];
-
-    if (!userId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ message: 'Missing userId' }),
-      };
+    if (!mongoose.connection.readyState) {
+      await mongoose.connect(MONGODB_URI, { dbName: "userDB" });
     }
 
     const user = await User.findOne({ userId });
 
+    if (!user) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ exists: false }),
+      };
+    }
+
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        exists: !!user,
-        tokenVerified: user ? user.tokenVerified : false,
-      }),
+      body: JSON.stringify({ exists: true, tokenVerified: user.tokenVerified }),
     };
   } catch (err) {
-    console.error(err);
+    console.error("DB error:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Server error' }),
+      body: JSON.stringify({ message: "Internal server error", error: err.message }),
     };
   }
 };
