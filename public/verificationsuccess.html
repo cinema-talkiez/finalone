@@ -24,9 +24,7 @@
       background: rgba(255, 255, 255, 0.1);
       border-radius: 16px;
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-      -webkit-backdrop-filter: blur(5px);
       backdrop-filter: blur(5px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
       max-width: 600px;
       margin: 20px;
     }
@@ -69,10 +67,9 @@
 <body>
   <div class="container">
     <h1 style="font-size: 1.5rem; color: BLACK;">✅ Verification Success</h1>
-    <!-- Hidden User ID -->
     <p style="display: none;"><strong>User ID:</strong> <span id="userIdDisplay"></span></p>
-    <button id="submitBtn">SUBMIT</button>
-    <p id="statusMsg"></p>
+    <button id="submitBtn" disabled>SUBMIT</button>
+    <p id="statusMsg">⏳ Checking database...</p>
   </div>
 
   <script>
@@ -84,26 +81,34 @@
 
     if (!userId) {
       userIdDisplay.textContent = 'Not found in URL!';
+      statusMsg.textContent = '⚠️ Missing userId in URL.';
       submitBtn.disabled = true;
     } else {
       userIdDisplay.textContent = userId;
 
-      // Check if already verified
+      // Check ONLY if the record exists
       fetch(`/.netlify/functions/check/${userId}`)
         .then(res => res.json())
         .then(data => {
-          if (data.exists && data.tokenVerified) {
-            statusMsg.textContent = '✅ Already verified.';
+          if (data.exists) {
+            statusMsg.textContent = '🔒 User already exists. Submit disabled.';
             submitBtn.disabled = true;
+          } else {
+            statusMsg.textContent = '🔓 User does not exist. Ready to submit.';
+            submitBtn.disabled = false;
           }
         })
         .catch(err => {
           console.error("Check error:", err);
-          statusMsg.textContent = '⚠️ Unable to check verification status.';
+          statusMsg.textContent = '⚠️ Check failed. Proceed if needed.';
+          submitBtn.disabled = false;
         });
     }
 
     submitBtn.addEventListener('click', async () => {
+      submitBtn.disabled = true;
+      statusMsg.textContent = '⏳ Submitting...';
+
       try {
         const res = await fetch('/.netlify/functions/verify', {
           method: 'POST',
@@ -115,13 +120,14 @@
 
         if (res.ok) {
           statusMsg.textContent = '✅ User verified and saved!';
-          submitBtn.disabled = true;
         } else {
           statusMsg.textContent = `❌ Error: ${data.message}`;
+          submitBtn.disabled = false;
         }
       } catch (err) {
         console.error("Submit error:", err);
         statusMsg.textContent = '❌ Server error occurred.';
+        submitBtn.disabled = false;
       }
     });
   </script>
