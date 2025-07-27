@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-
-const MONGODB_URI = process.env.MONGODB_URI; // ← now loaded from Netlify
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const userSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
@@ -30,13 +29,13 @@ exports.handler = async (event) => {
     if (!user) {
       return {
         statusCode: 200,
-        body: JSON.stringify({ exists: false }),
+        body: JSON.stringify({ tokenVerified: false }),
       };
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ exists: true, tokenVerified: user.tokenVerified }),
+      body: JSON.stringify({ tokenVerified: user.tokenVerified }),
     };
   } catch (err) {
     console.error("DB error:", err);
