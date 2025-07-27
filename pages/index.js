@@ -27,7 +27,7 @@ export default function IndexPage() {
     setUserId(uid);
 
     // Fetch token status from backend
-    fetch(`/api/check/${uid}`)
+    fetch(`/.netlify/functions/check/${uid}`)
       .then(res => res.json())
       .then(data => {
         console.log("Token Check API Response:", data);
