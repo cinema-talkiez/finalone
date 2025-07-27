@@ -91,10 +91,10 @@
         .then(res => res.json())
         .then(data => {
           if (data.exists) {
-            statusMsg.textContent = '🔒 User already exists. Submit disabled.';
+            statusMsg.textContent = 'Already Verified ✅';
             submitBtn.disabled = true;
           } else {
-            statusMsg.textContent = '🔓 User does not exist. Ready to submit.';
+            statusMsg.textContent = 'Ready to submit.';
             submitBtn.disabled = false;
           }
         })
