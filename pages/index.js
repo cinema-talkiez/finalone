@@ -9,7 +9,7 @@ export default function IndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const MAX_AGE = 24*60*60*1000;
+    const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
     let uid = localStorage.getItem("userId");
     let createdAt = localStorage.getItem("createdAt");
 
@@ -26,15 +26,22 @@ export default function IndexPage() {
 
     setUserId(uid);
 
-    // Check token status via backend
+    // Fetch token status from backend
     fetch(`/api/check/${uid}`)
       .then(res => res.json())
       .then(data => {
-        console.log("Token Check:", data); // Debug
+        console.log("Token Check:", data);
         setTokenVerified(data.tokenVerified);
-        // Check validToken from localStorage without expiration
+
         const storedValidToken = localStorage.getItem("validToken") === "true";
-        setValidToken(storedValidToken);
+        const validTokenExp = localStorage.getItem("validTokenExpiration");
+
+        if (storedValidToken && validTokenExp && Date.now() < parseInt(validTokenExp)) {
+          setValidToken(true);
+        } else {
+          setValidToken(false);
+        }
+
         setLoading(false);
       })
       .catch(err => {
@@ -57,7 +64,7 @@ export default function IndexPage() {
       <div className="container5">
         <h1>Welcome to BlackHole</h1>
         <p>
-        BlackHole is specially designed for middle-class movie lovers. This is an affordable entertainment with a vast collection of movies without the financial burden.
+          BlackHole is specially designed for middle-class movie lovers. This is an affordable entertainment with a vast collection of movies without the financial burden.
         </p>
 
         {tokenVerified && validToken ? (
@@ -73,30 +80,29 @@ export default function IndexPage() {
           </div>
         ) : (
           <div>
-        <p style={{ color: 'yellow', fontSize: '15px' }}>⚠️ Token not verified. Please verify first.</p>
-
+            <p style={{ color: 'yellow', fontSize: '15px' }}>
+              ⚠️ Token not verified. Please verify first.
+            </p>
             <button onClick={() => router.push("/Verifypage.html")} className="verifyButton">
               Go to Verify Page
             </button>
           </div>
         )}
 
-        {/* Adding styles */}
         <style jsx>{`
-          .container {
+          .container5 {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             text-align: center;
+            padding: 20px;
           }
-
           .loading-text {
             font-size: 18px;
             color: white;
           }
-
           button {
             padding: 12px 24px;
             font-size: 18px;
@@ -107,17 +113,14 @@ export default function IndexPage() {
             margin: 10px;
             width: 200px;
           }
-
           .verifyButton {
             background-color: #ff5722;
             color: white;
           }
-
           .visitButton {
             background-color: #4caf50;
             color: white;
           }
-
           .visitButton:hover {
             background-color: #388e3c;
           }
