@@ -1,53 +1,51 @@
 const mongoose = require('mongoose');
-const path = require('path');
-const User = require(path.resolve(__dirname, '../../server/models/User'));
-require('dotenv').config();
+const User = require('../../server/models/User'); // adjust if your path is different
 
-let conn = null;
+const MONGO_URI = process.env.MONGO_URI;
 
-async function connectDB() {
-  if (conn) return conn;
-  conn = await mongoose.connect(process.env.MONGO_URI, {
-    bufferCommands: false,
-  });
-  return conn;
-}
+let isConnected = false;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      body: JSON.stringify({ message: 'Method Not Allowed' }),
+      body: JSON.stringify({ message: 'Method Not Allowed' })
     };
   }
 
   try {
-    await connectDB(); // ✅ Connect only on demand
-
     const { userId, tokenVerified } = JSON.parse(event.body || '{}');
 
     if (!userId) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: 'Missing userId' }),
+        body: JSON.stringify({ message: 'Missing userId' })
       };
     }
 
-    const result = await User.findOneAndUpdate(
+    if (!isConnected) {
+      await mongoose.connect(MONGO_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+      });
+      isConnected = true;
+    }
+
+    const user = await User.findOneAndUpdate(
       { userId },
-      { $set: { tokenVerified } },
-      { upsert: true, new: true }
+      { tokenVerified: !!tokenVerified },
+      { new: true, upsert: true }
     );
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: 'User verification updated.', user: result }),
+      body: JSON.stringify({ message: 'User verified', user })
     };
   } catch (err) {
-    console.error(err);
+    console.error('❌ VERIFY ERROR:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Server error' }),
+      body: JSON.stringify({ message: 'Internal server error' })
     };
   }
 };
