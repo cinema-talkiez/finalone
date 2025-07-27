@@ -1,150 +1,151 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Verification Success</title>
-  <style>
-    body {
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
+import { useEffect, useState } from "react";
 
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-      -webkit-backdrop-filter: blur(5px);
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      max-width: 600px;
-      margin: 20px;
-    }
+export default function VerificationSuccess() {
+  const [isVerified, setIsVerified] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [statusMsg, setStatusMsg] = useState("");
+  const [userId, setUserId] = useState("");
 
-    h1 {
-      font-size: 2.5rem;
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    p {
-      font-size: 1.2rem;
-      color: #555;
-      margin-bottom: 20px;
-    }
-
-    button {
-      padding: 12px 24px;
-      font-size: 18px;
-      border: none;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: 0.3s;
-      margin: 10px;
-      width: 200px;
-      background-color: #ff5722;
-      color: white;
-    }
-
-    button:hover:not(:disabled) {
-      background-color: #e64a19;
-    }
-
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-
-    #statusMsg {
-      margin-top: 1rem;
-      font-weight: bold;
-      color: #555;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1 style="font-size: 1.5rem; color: BLACK;">✅ Verification Success</h1>
-
-    <p style="display: none;"><strong>User ID:</strong> <span id="userIdDisplay"></span></p>
-
-    <button id="submitBtn" style="background-color: red; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; text-align: center;">
-      SUBMIT
-    </button>
-
-    <p id="statusMsg"></p>
-  </div>
-
-  <script>
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const userId = params.get('userId') || params.get('userid');
-    const userIdDisplay = document.getElementById('userIdDisplay');
-    const statusMsg = document.getElementById('statusMsg');
-    const submitBtn = document.getElementById('submitBtn');
+    const uid = params.get("userId") || params.get("userid");
 
-    if (!userId) {
-      userIdDisplay.textContent = 'Not found in URL!';
-      submitBtn.disabled = true;
-    } else {
-      userIdDisplay.textContent = userId;
-
-      // Check if already verified
-      fetch(`/.netlify/functions/check/${userId}`)
-        .then(res => res.json())
-        .then(data => {
+    if (uid) {
+      setUserId(uid);
+      fetch(`/.netlify/functions/check/${uid}`)
+        .then((res) => res.json())
+        .then((data) => {
           if (data.exists && data.tokenVerified) {
-            statusMsg.textContent = '✅ Already verified.';
-            submitBtn.disabled = true;
+            setIsVerified(true);
+            setStatusMsg("✅ Already verified.");
+          } else {
+            setStatusMsg("❗ Not yet verified.");
           }
         })
-        .catch(err => {
-          console.error('Check request failed:', err);
-          statusMsg.textContent = '⚠️ Failed to check verification status.';
+        .catch((err) => {
+          console.error("Fetch error:", err);
+          setStatusMsg("❌ Error checking verification.");
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
+    } else {
+      setStatusMsg("❌ User ID not found in URL.");
+      setIsLoading(false);
     }
+  }, []);
 
-    submitBtn.addEventListener('click', async () => {
-      try {
-        const res = await fetch('/.netlify/functions/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, tokenVerified: true })
-        });
+  const handleSubmit = async () => {
+    try {
+      const res = await fetch("/.netlify/functions/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, tokenVerified: true }),
+      });
 
-        let data;
-        try {
-          data = await res.json();
-        } catch (parseErr) {
-          console.error('JSON parse error:', parseErr);
-          statusMsg.textContent = '❌ Failed to parse server response.';
-          return;
-        }
-
-        if (res.ok) {
-          statusMsg.textContent = '✅ User verified and saved!';
-          submitBtn.disabled = true;
-          localStorage.setItem("validToken", "true");
-          localStorage.setItem("validTokenExpiration", (Date.now() + 10 * 60 * 1000).toString());
-        } else {
-          console.error('Response error:', data);
-          statusMsg.textContent = `❌ Error: ${data?.message || 'Unknown error occurred.'}`;
-        }
-      } catch (err) {
-        console.error('Fetch failed:', err);
-        statusMsg.textContent = '❌ Server error occurred.';
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMsg("✅ User verified and saved!");
+        setIsVerified(true);
+        localStorage.setItem("validToken", "true");
+        localStorage.setItem("validTokenExpiration", (Date.now() + 10 * 60 * 1000).toString());
+      } else {
+        setStatusMsg(`❌ Error: ${data.message}`);
       }
-    });
-  </script>
-</body>
-</html>
+    } catch (err) {
+      console.error(err);
+      setStatusMsg("❌ Server error occurred.");
+    }
+  };
+
+  const handleExitApp = () => {
+    if (window.Android) {
+      window.Android.exitApp();
+    } else {
+      window.close();
+      setTimeout(() => {
+        alert("Unable to close automatically. Please close the tab manually.");
+      }, 500);
+    }
+  };
+
+  return (
+    <div className="verification-success">
+      <div className="success-container">
+        <h1>✅ Verification Page</h1>
+        <p>{statusMsg}</p>
+
+        {!isLoading && (
+          <button
+            className="submit-btn"
+            onClick={handleSubmit}
+            disabled={isVerified || !userId}
+          >
+            {isVerified ? "Already Verified" : "Submit"}
+          </button>
+        )}
+
+        <p>Click the button below to Exit the app.</p>
+        <button className="exit-btn" onClick={handleExitApp}>
+          Exit App
+        </button>
+      </div>
+
+      {/* Embedded Styles */}
+      <style jsx>{`
+        .verification-success {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background-color: #121212;
+          color: #fff;
+          text-align: center;
+        }
+
+        .success-container {
+          background: #1e1e1e;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1);
+          max-width: 400px;
+          width: 90%;
+        }
+
+        h1 {
+          font-size: 24px;
+          margin-bottom: 10px;
+          color: #4caf50;
+        }
+
+        p {
+          font-size: 16px;
+          opacity: 0.9;
+        }
+
+        .submit-btn,
+        .exit-btn {
+          margin-top: 15px;
+          padding: 10px 20px;
+          font-size: 18px;
+          color: white;
+          background-color: red;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+
+        .submit-btn:hover:enabled,
+        .exit-btn:hover {
+          background-color: darkred;
+        }
+
+        .submit-btn:disabled {
+          background-color: gray;
+          cursor: not-allowed;
+        }
+      `}</style>
+    </div>
+  );
+}
