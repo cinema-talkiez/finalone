@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config();
 
-const User = require(path.resolve(__dirname, '../../server/models/User'));
+const User = require('../../models/User');
 
 let isConnected = false;
 
@@ -24,20 +23,14 @@ exports.handler = async (event) => {
       };
     }
 
-    // Connect to MongoDB once per cold start
     if (!isConnected) {
-      await mongoose.connect(process.env.MONGO_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        dbName: 'userDB', // <- specify database name if not in URI
-      });
+      await mongoose.connect(process.env.MONGO_URI);
       isConnected = true;
-      console.log('✅ MongoDB connected');
     }
 
     const updatedUser = await User.findOneAndUpdate(
       { userId },
-      { $set: { tokenVerified: !!tokenVerified } },
+      { tokenVerified: !!tokenVerified },
       { upsert: true, new: true }
     );
 
