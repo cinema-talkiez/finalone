@@ -13,11 +13,13 @@ export default function IndexPage() {
     let uid = localStorage.getItem("userId");
     let createdAt = localStorage.getItem("createdAt");
 
+    // Invalidate old user ID
     if (uid && createdAt && Date.now() - parseInt(createdAt) > MAX_AGE) {
       localStorage.clear();
       uid = null;
     }
 
+    // Generate new user ID if needed
     if (!uid) {
       uid = generateUUID();
       localStorage.setItem("userId", uid);
@@ -26,29 +28,28 @@ export default function IndexPage() {
 
     setUserId(uid);
 
-    // Fetch token status from backend
+    // Check token status from backend
     fetch(`/.netlify/functions/check/${uid}`)
       .then(res => res.json())
       .then(data => {
-        console.log("Token Check API Response:", data);
-        setTokenVerified(data.tokenVerified);
+        console.log("✅ Token Check API Response:", data);
+        const isVerified = !!data.tokenVerified && data.exists !== false;
+        setTokenVerified(isVerified);
 
         const storedValidToken = localStorage.getItem("validToken") === "true";
         const validTokenExp = localStorage.getItem("validTokenExpiration");
-        const isNotExpired = validTokenExp && Date.now() < parseInt(validTokenExp);
+        const isNotExpired =
+          validTokenExp && Date.now() < parseInt(validTokenExp);
 
-        console.log("validToken:", storedValidToken, "Expiration:", validTokenExp, "Expired?", !isNotExpired);
+        console.log("✅ localStorage validToken:", storedValidToken);
+        console.log("✅ validTokenExpiration:", validTokenExp);
+        console.log("✅ TokenExpired?", !isNotExpired);
 
-        if (storedValidToken && isNotExpired) {
-          setValidToken(true);
-        } else {
-          setValidToken(false);
-        }
-
+        setValidToken(storedValidToken && isNotExpired);
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error:", err);
+        console.error("❌ Error checking token:", err);
         setLoading(false);
       });
   }, []);
@@ -62,29 +63,45 @@ export default function IndexPage() {
 
   if (loading) return <p className="loading-text">Checking token status...</p>;
 
+  console.log("🔍 Final States → tokenVerified:", tokenVerified, "validToken:", validToken);
+
   return (
     <div className="glassmorphism-page">
       <div className="container5">
         <h1>Welcome to BlackHole</h1>
         <p>
-          BlackHole is specially designed for middle-class movie lovers. This is affordable entertainment with a vast collection of movies without the financial burden.
+          BlackHole is specially designed for middle-class movie lovers. This is
+          affordable entertainment with a vast collection of movies without the
+          financial burden.
         </p>
 
+        {/* CONDITIONAL BUTTONS */}
         {tokenVerified && validToken ? (
-          <button onClick={() => router.push("/index1")} className="visitButton">
+          <button
+            onClick={() => router.push("/index1")}
+            className="visitButton"
+          >
             Visit HomePage
           </button>
-        ) : tokenVerified ? (
+        ) : tokenVerified && !validToken ? (
           <div>
             <p>✅ Token is verified in DB. Please finalize it...</p>
-            <button onClick={() => router.push("/verification-success")} className="verifyButton">
+            <button
+              onClick={() => router.push("/verification-success")}
+              className="verifyButton"
+            >
               Set Token
             </button>
           </div>
         ) : (
           <div>
-            <p style={{ color: 'yellow', fontSize: '15px' }}>⚠️ Token not verified. Please verify first.</p>
-            <button onClick={() => router.push("/Verifypage.html")} className="verifyButton">
+            <p style={{ color: "yellow", fontSize: "15px" }}>
+              ⚠️ Token not verified. Please verify first.
+            </p>
+            <button
+              onClick={() => router.push("/Verifypage.html")}
+              className="verifyButton"
+            >
               Go to Verify Page
             </button>
           </div>
