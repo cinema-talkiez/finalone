@@ -30,13 +30,16 @@ export default function IndexPage() {
     fetch(`/api/check/${uid}`)
       .then(res => res.json())
       .then(data => {
-        console.log("Token Check:", data);
+        console.log("Token Check API Response:", data);
         setTokenVerified(data.tokenVerified);
 
         const storedValidToken = localStorage.getItem("validToken") === "true";
         const validTokenExp = localStorage.getItem("validTokenExpiration");
+        const isNotExpired = validTokenExp && Date.now() < parseInt(validTokenExp);
 
-        if (storedValidToken && validTokenExp && Date.now() < parseInt(validTokenExp)) {
+        console.log("validToken:", storedValidToken, "Expiration:", validTokenExp, "Expired?", !isNotExpired);
+
+        if (storedValidToken && isNotExpired) {
           setValidToken(true);
         } else {
           setValidToken(false);
@@ -64,7 +67,7 @@ export default function IndexPage() {
       <div className="container5">
         <h1>Welcome to BlackHole</h1>
         <p>
-          BlackHole is specially designed for middle-class movie lovers. This is an affordable entertainment with a vast collection of movies without the financial burden.
+          BlackHole is specially designed for middle-class movie lovers. This is affordable entertainment with a vast collection of movies without the financial burden.
         </p>
 
         {tokenVerified && validToken ? (
@@ -73,16 +76,14 @@ export default function IndexPage() {
           </button>
         ) : tokenVerified ? (
           <div>
-            <p>Token verification almost completed, click here...</p>
+            <p>✅ Token is verified in DB. Please finalize it...</p>
             <button onClick={() => router.push("/verification-success")} className="verifyButton">
               Set Token
             </button>
           </div>
         ) : (
           <div>
-            <p style={{ color: 'yellow', fontSize: '15px' }}>
-              ⚠️ Token not verified. Please verify first.
-            </p>
+            <p style={{ color: 'yellow', fontSize: '15px' }}>⚠️ Token not verified. Please verify first.</p>
             <button onClick={() => router.push("/Verifypage.html")} className="verifyButton">
               Go to Verify Page
             </button>
