@@ -107,7 +107,7 @@ useEffect(() => {
         )}
 
         <style jsx>{`
-          .container5 {
+          .container {
             display: flex;
             flex-direction: column;
             align-items: center;
