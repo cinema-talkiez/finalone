@@ -8,51 +8,50 @@ export default function IndexPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
-    let uid = localStorage.getItem("userId");
-    let createdAt = localStorage.getItem("createdAt");
+useEffect(() => {
+  const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+  let uid = localStorage.getItem("userId");
+  let createdAt = localStorage.getItem("createdAt");
 
-    // Invalidate old user ID
-    if (uid && createdAt && Date.now() - parseInt(createdAt) > MAX_AGE) {
-      localStorage.clear();
-      uid = null;
-    }
+  // Invalidate old user ID
+  if (uid && createdAt && Date.now() - parseInt(createdAt) > MAX_AGE) {
+    localStorage.clear();
+    uid = null;
+  }
 
-    // Generate new user ID if needed
-    if (!uid) {
-      uid = generateUUID();
-      localStorage.setItem("userId", uid);
-      localStorage.setItem("createdAt", Date.now().toString());
-    }
+  // Generate new user ID if needed
+  if (!uid) {
+    uid = generateUUID();
+    localStorage.setItem("userId", uid);
+    localStorage.setItem("createdAt", Date.now().toString());
+  }
 
-    setUserId(uid);
+  setUserId(uid);
 
-    // Check token status from backend
-    fetch(`/.netlify/functions/check/${uid}`)
-      .then(res => res.json())
-      .then(data => {
-        console.log("✅ Token Check API Response:", data);
-        const isVerified = !!data.tokenVerified && data.exists !== false;
-        setTokenVerified(isVerified);
+  // Fetch tokenVerified from DB
+  fetch(`/.netlify/functions/check/${uid}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("✅ DB Check:", data);
+      const isVerifiedInDB = data.exists && data.tokenVerified === true;
+      setTokenVerified(isVerifiedInDB);
 
-        const storedValidToken = localStorage.getItem("validToken") === "true";
-        const validTokenExp = localStorage.getItem("validTokenExpiration");
-        const isNotExpired =
-          validTokenExp && Date.now() < parseInt(validTokenExp);
+      // Now check localStorage for short-lived token
+      const storedValidToken = localStorage.getItem("validToken") === "true";
+      const validTokenExp = localStorage.getItem("validTokenExpiration");
+      const isNotExpired = validTokenExp && Date.now() < parseInt(validTokenExp);
 
-        console.log("✅ localStorage validToken:", storedValidToken);
-        console.log("✅ validTokenExpiration:", validTokenExp);
-        console.log("✅ TokenExpired?", !isNotExpired);
+      const isValidToken = storedValidToken && isNotExpired;
 
-        setValidToken(storedValidToken && isNotExpired);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("❌ Error checking token:", err);
-        setLoading(false);
-      });
-  }, []);
+      setValidToken(isValidToken);
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error("❌ DB check error:", err);
+      setLoading(false);
+    });
+}, []);
+
 
   const generateUUID = () =>
     "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
