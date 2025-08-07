@@ -90,7 +90,7 @@ export default function IndexPage() {
             </button>
           </div>
         ) : (
-          <div className="verify-container">
+          <div className="container5">
             {loading ? (
               <p className="loading-text">Checking token status...</p>
             ) : (
