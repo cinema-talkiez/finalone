@@ -8,50 +8,49 @@ export default function IndexPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-useEffect(() => {
-  const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
-  let uid = localStorage.getItem("userId");
-  let createdAt = localStorage.getItem("createdAt");
+  useEffect(() => {
+    const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+    let uid = localStorage.getItem("userId");
+    let createdAt = localStorage.getItem("createdAt");
 
-  // Invalidate old user ID
-  if (uid && createdAt && Date.now() - parseInt(createdAt) > MAX_AGE) {
-    localStorage.clear();
-    uid = null;
-  }
+    // Invalidate old user ID
+    if (uid && createdAt && Date.now() - parseInt(createdAt) > MAX_AGE) {
+      localStorage.clear();
+      uid = null;
+    }
 
-  // Generate new user ID if needed
-  if (!uid) {
-    uid = generateUUID();
-    localStorage.setItem("userId", uid);
-    localStorage.setItem("createdAt", Date.now().toString());
-  }
+    // Generate new user ID if needed
+    if (!uid) {
+      uid = generateUUID();
+      localStorage.setItem("userId", uid);
+      localStorage.setItem("createdAt", Date.now().toString());
+    }
 
-  setUserId(uid);
+    setUserId(uid);
 
-  // Fetch tokenVerified from DB
-  fetch(`/.netlify/functions/check/${uid}`)
-    .then(res => res.json())
-    .then(data => {
-      console.log("✅ DB Check:", data);
-      const isVerifiedInDB = data.exists && data.tokenVerified === true;
-      setTokenVerified(isVerifiedInDB);
+    // Fetch tokenVerified from DB
+    fetch(`/.netlify/functions/check/${uid}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log("✅ DB Check:", data);
+        const isVerifiedInDB = data.exists && data.tokenVerified === true;
+        setTokenVerified(isVerifiedInDB);
 
-      // Now check localStorage for short-lived token
-      const storedValidToken = localStorage.getItem("validToken") === "true";
-      const validTokenExp = localStorage.getItem("validTokenExpiration");
-      const isNotExpired = validTokenExp && Date.now() < parseInt(validTokenExp);
+        // Check localStorage for short-lived token
+        const storedValidToken = localStorage.getItem("validToken") === "true";
+        const validTokenExp = localStorage.getItem("validTokenExpiration");
+        const isNotExpired = validTokenExp && Date.now() < parseInt(validTokenExp);
 
-      const isValidToken = storedValidToken && isNotExpired;
+        const isValidToken = storedValidToken && isNotExpired;
 
-      setValidToken(isValidToken);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error("❌ DB check error:", err);
-      setLoading(false);
-    });
-}, []);
-
+        setValidToken(isValidToken);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("❌ DB check error:", err);
+        setLoading(false);
+      });
+  }, []);
 
   const generateUUID = () =>
     "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
@@ -59,8 +58,6 @@ useEffect(() => {
       const v = c === "x" ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
-
-  if (loading) return <p className="loading-text">Checking token status...</p>;
 
   console.log("🔍 Final States → tokenVerified:", tokenVerified, "validToken:", validToken);
 
@@ -93,21 +90,27 @@ useEffect(() => {
             </button>
           </div>
         ) : (
-          <div>
-            <p style={{ color: "yellow", fontSize: "15px" }}>
-              ⚠️ Token not verified. Please verify first.
-            </p>
-            <button
-              onClick={() => router.push("/Verifypage.html")}
-              className="verifyButton"
-            >
-              Go to Verify Page
-            </button>
+          <div className="verify-container">
+            {loading ? (
+              <p className="loading-text">Checking token status...</p>
+            ) : (
+              <>
+                <p style={{ color: "yellow", fontSize: "15px" }}>
+                  ⚠️ Token not verified. Please verify first.
+                </p>
+                <button
+                  onClick={() => router.push("/Verifypage.html")}
+                  className="verifyButton"
+                >
+                  Go to Verify Page
+                </button>
+              </>
+            )}
           </div>
         )}
 
         <style jsx>{`
-          .container {
+          .container5 {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -116,9 +119,21 @@ useEffect(() => {
             text-align: center;
             padding: 20px;
           }
+          .verify-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+          }
           .loading-text {
-            font-size: 18px;
-            color: white;
+            font-size: 15px;
+            color: yellow;
+            font-weight: 500;
+            margin: 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
           }
           button {
             padding: 12px 24px;
