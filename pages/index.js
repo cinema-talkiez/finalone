@@ -115,17 +115,9 @@ export default function IndexPage() {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            min-height: 50vh;
             text-align: center;
             padding: 20px;
-          }
-          .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
           }
           .verify-container {
             display: flex;
