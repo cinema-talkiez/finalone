@@ -221,7 +221,7 @@ const Index1 = () => {
             </div>
             <div
               style={cardStyle}
-              onClick={() => handleRedirect("https://www.5movierulz.voto/")}
+              onClick={() => handleRedirect("https://www.5movierulz.fish/")}
               onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
               onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
             >
