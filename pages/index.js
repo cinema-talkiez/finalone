@@ -115,7 +115,6 @@ export default function IndexPage() {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 50vh;
             text-align: center;
             padding: 20px;
           }
