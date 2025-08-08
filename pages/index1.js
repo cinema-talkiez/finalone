@@ -203,7 +203,7 @@ const Index1 = () => {
           <div style={containerStyle}>
             <div
               style={cardStyle}
-              onClick={() => handleRedirect("https://rta.ibomma.foo/")}
+              onClick={() => handleRedirect("https://www.bappam.dev/")}
               onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
               onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
             >
@@ -212,7 +212,7 @@ const Index1 = () => {
             </div>
             <div
               style={cardStyle}
-              onClick={() => handleRedirect("https://www.moviezwap.pink/")}
+              onClick={() => handleRedirect("https://www.moviezwap.blue/")}
               onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
               onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
             >
