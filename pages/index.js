@@ -119,6 +119,14 @@ export default function IndexPage() {
             text-align: center;
             padding: 20px;
           }
+          .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+          }
           .verify-container {
             display: flex;
             flex-direction: column;
